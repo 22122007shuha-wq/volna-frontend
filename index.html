@@ -480,11 +480,26 @@ async function apiTrack(id){
 }
 
 function trackRow(t){
-  const isFav=favorites.some(f=>f.id===t.id);
-  return `<div class="track"><div class="cover" onclick="playFromList('${t.id}')">🎵</div>
-  <div class="tinfo" onclick="playFromList('${t.id}')"><div class="ttitle">${t.title}</div><div class="tartist">${t.artist}</div></div>
-  <button class="fav-btn ${isFav?'active':''}" onclick="toggleFav('${t.id}','${t.title.replace(/'/g,"")}','${t.artist.replace(/'/g,"")}')">${isFav?'♥':'♡'}</button></div>`;
+  const isFav = favorites.some(f => f.id === t.id);
+  const cover = t.coverUrl || t.cover || t.image || t.thumbnail || "";
+  const esc = v => String(v || "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+  const title = esc(t.title || "Без названия");
+  const artist = esc(t.artist || "Неизвестный исполнитель");
+  const art = cover
+    ? `background-image:url('${esc(cover)}');background-size:cover;background-position:center;`
+    : "background:linear-gradient(135deg,#8b5cf6,#ec4899);";
+  return `<div class="track">
+    <div class="cover" style="${art}" onclick="playFromList('${esc(t.id)}')">${cover ? "" : "♫"}</div>
+    <div class="tinfo" onclick="playFromList('${esc(t.id)}')">
+      <div class="ttitle">${title}</div>
+      <div class="tartist">${artist}</div>
+    </div>
+    <button class="fav-btn ${isFav?'active':''}" onclick="toggleFav('${esc(t.id)}','${title}','${artist}')">${isFav?'♥':'♡'}</button>
+  </div>`;
 }
+
 
 async function loadHome(){
   const results=await apiSearch('instrumental');
