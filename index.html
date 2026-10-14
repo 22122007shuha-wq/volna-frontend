@@ -501,12 +501,59 @@ function trackRow(t){
 }
 
 
+
 async function loadHome(){
-  const results=await apiSearch('instrumental');
-  currentList=results;
-  document.getElementById('home-list').innerHTML=results.length?results.slice(0,12).map(trackRow).join(''):`<div class="bignote">Не удалось загрузить каталог. Проверьте, что backend запущен.</div>`;
-  renderLists();
+  const list = document.getElementById('home-list');
+  list.innerHTML = '<div class="spinner">Загружаем музыку...</div>';
+
+  const queries = [
+    'pop music',
+    'rock music',
+    'hip hop',
+    'electronic music',
+    'jazz',
+    'classical music',
+    'ambient',
+    'instrumental',
+    'soundtrack',
+    'soul music'
+  ];
+
+  try {
+    const batches = await Promise.all(
+      queries.map(q => apiSearch(q))
+    );
+
+    const seen = new Set();
+    const tracks = [];
+
+    for (const batch of batches) {
+      if (!Array.isArray(batch)) continue;
+
+      for (const track of batch) {
+        if (!track || track.id == null) continue;
+
+        const id = String(track.id);
+        if (seen.has(id)) continue;
+
+        seen.add(id);
+        tracks.push(track);
+      }
+    }
+
+    currentList = tracks;
+
+    list.innerHTML = tracks.length
+      ? tracks.slice(0, 50).map(trackRow).join('')
+      : '<div class="bignote">Не удалось загрузить музыку. Попробуйте позже.</div>';
+
+    renderLists();
+  } catch (error) {
+    list.innerHTML =
+      '<div class="bignote">Ошибка загрузки каталога. Попробуйте обновить страницу.</div>';
+  }
 }
+
 
 let mediaRecorder=null,recChunks=[],isRecording=false;
 async function toggleRecording(){
